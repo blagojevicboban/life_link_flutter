@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 class BleService {
   static final BleService _instance = BleService._internal();
@@ -22,6 +24,15 @@ class BleService {
   Stream<BluetoothConnectionState> get connectionStateStream => _connectionStateController.stream;
 
   Future<void> init() async {
+    // Request permissions
+    if (Platform.isAndroid) {
+      await [
+        Permission.location,
+        Permission.bluetoothScan,
+        Permission.bluetoothConnect,
+      ].request();
+    }
+
     // Determine if we are already connected to a device
     if (FlutterBluePlus.connectedDevices.isNotEmpty) {
       connectedDevice = FlutterBluePlus.connectedDevices.first;
@@ -38,8 +49,12 @@ class BleService {
     // Listen to scan results
     _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult result in results) {
+        print("Found device: ${result.device.platformName} (${result.device.remoteId})");
+        print("  Services: ${result.advertisementData.serviceUuids}");
+        
         if (result.device.platformName == _deviceName || 
             result.advertisementData.serviceUuids.contains(Guid(_serviceUuid))) {
+          print("  >>> MATCH FOUND! Connecting...");
           _connectToDevice(result.device);
           stopScan(); // Stop scanning once found
           break;
@@ -47,7 +62,11 @@ class BleService {
       }
     });
 
-    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 15));
+    // Start scanning without filter first to test visibility
+    await FlutterBluePlus.startScan(
+      // withServices: [Guid(_serviceUuid)], 
+      timeout: const Duration(seconds: 15),
+    );
   }
 
   Future<void> stopScan() async {
@@ -70,7 +89,7 @@ class BleService {
     });
 
     try {
-      await device.connect(autoConnect: true);
+      await device.connect(autoConnect: false);
       await _discoverServices();
     } catch (e) {
       print("Connection Error: $e");

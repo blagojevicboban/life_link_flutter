@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:vibration/vibration.dart';
 import '../services/ble_service.dart';
 
 enum AlertState { safe, warning, alarm }
@@ -54,6 +55,8 @@ class SensorProvider with ChangeNotifier {
       String msg = utf8.decode(data).trim();
       _rawMessage = msg;
       
+      AlertState previousState = _alertState;
+
       // Parse patterns:
       // POTENTIAL_FALL G:2.50 P:100 S:98
       // FALL_DETECTED G:3.20 P:0 S:0
@@ -65,20 +68,33 @@ class SensorProvider with ChangeNotifier {
         _alertState = AlertState.alarm;
         _extractMetrics(msg);
       } else {
-        // Normal data or status
-        if (_alertState != AlertState.alarm) {
-             // Only reset to safe if we aren't in an alarm state (unless we want auto-reset)
-             // For now, let's assume if we get normal data, maybe we are safe? 
-             // Actually, usually "FALL_DETECTED" persists. 
-             // Let's rely on explicit resets or consistent stream for "safe" if needed.
-             // But based on spec, we might just be getting alerts.
-             // If we get just "STATUS ...", maybe that's safe.
-             // For now, minimal logic.
-        }
+        // Normal data? Keep logic simple for now.
       }
+
+      // Trigger Haptics on State Change
+      if (_alertState != previousState) {
+        _handleHaptics(_alertState);
+      }
+
       notifyListeners();
     } catch (e) {
       print("Parse Error: $e");
+    }
+  }
+
+  void _handleHaptics(AlertState state) async {
+    bool hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (!hasVibrator) return;
+
+    if (state == AlertState.alarm) {
+      // Heavy Vibration specifically for Fall
+      Vibration.vibrate(pattern: [500, 1000, 500, 1000, 500, 1000], intensities: [128, 255, 128, 255, 128, 255]);
+    } else if (state == AlertState.warning) {
+      // Warning Vibration
+      Vibration.vibrate(duration: 500);
+    } else {
+      // Safe - Cancel vibration
+      Vibration.cancel();
     }
   }
 
@@ -89,9 +105,9 @@ class SensorProvider with ChangeNotifier {
     try {
       // Logic to pull out G, P, S
       // This is a naive implementation, robust regex is better.
-      RegExp gReg = RegExp(r"G:([0-9.]+)");
-      RegExp pReg = RegExp(r"P:([0-9]+)");
-      RegExp sReg = RegExp(r"S:([0-9]+)");
+      RegExp gReg = RegExp(r"G:\s*([0-9.]+)");
+      RegExp pReg = RegExp(r"P:\s*([0-9]+)");
+      RegExp sReg = RegExp(r"S:\s*([0-9]+)");
 
       var gMatch = gReg.firstMatch(msg);
       var pMatch = pReg.firstMatch(msg);

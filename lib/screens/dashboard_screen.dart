@@ -83,7 +83,7 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 provider.isConnected ? "CONNECTED" : "DISCONNECTED",
-                style: GoogleFonts.chapeau(
+                style: GoogleFonts.rajdhani(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: provider.isConnected ? AppTheme.safe : AppTheme.danger,
