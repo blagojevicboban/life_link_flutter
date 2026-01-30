@@ -236,7 +236,9 @@ class DashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                "BLT", // Abbreviated as in design
+                provider.isConnected && provider.batteryLevel > 0
+                    ? "BAT ${provider.batteryLevel}%"
+                    : "BLT",
                 style: GoogleFonts.rajdhani(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

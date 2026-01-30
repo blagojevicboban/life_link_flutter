@@ -36,7 +36,7 @@ class BleService {
       ].request();
 
       // Check if Location Service is enabled (Critical for BLE on Android < 12)
-      if (await Permission.location.serviceStatus.isDisabled) {
+      if ((await Permission.location.serviceStatus).isDisabled) {
         print("WARNING: Location Services are DISABLED. BLE Scan might fail.");
         // Consider notifying UI or prompting user to enable it.
       }
