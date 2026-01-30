@@ -9,6 +9,7 @@ class AppTheme {
   static const Color surface = Color(0xFF1A1A1A);
   static const Color textMain = Color(0xFFFFFFFF);
   static const Color textDim = Color(0xFF888888);
+  static const Color accent = Color(0xFF00E5FF); // Cyan Accent
 
   static ThemeData get theme {
     return ThemeData(

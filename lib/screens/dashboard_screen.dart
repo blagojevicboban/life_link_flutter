@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+
 import '../providers/sensor_provider.dart';
 import '../core/app_theme.dart';
+import 'settings_screen.dart'; // Import SettingsScreen
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -14,172 +15,295 @@ class DashboardScreen extends StatelessWidget {
     // Dark background matching the watch face style
     return Scaffold(
       backgroundColor: const Color(0xFF020E15), // Deep navy/black
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white70),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: Consumer<SensorProvider>(
         builder: (context, provider, child) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildHeader(provider),
+          return Stack(
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                              vertical: 8.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildHeader(provider),
 
-                            const SizedBox(height: 32),
-                            // Main Status Card with rounded/circular aesthetic
-                            // Removed Expanded to prevent overflow/collapse in IntrinsicHeight
-                            _buildStatusCard(context, provider),
+                                const SizedBox(height: 32),
+                                // Main Status Card with rounded/circular aesthetic
+                                // Removed Expanded to prevent overflow/collapse in IntrinsicHeight
+                                _buildStatusCard(context, provider),
 
-                            const SizedBox(height: 24),
-                            // Metrics Grid
-                            _buildMetricsGrid(provider),
+                                const SizedBox(height: 24),
+                                // Metrics Grid
+                                _buildMetricsGrid(provider),
 
-                            const Spacer(),
-                            // Logo Section
-                            Center(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    "Info",
-                                    style: GoogleFonts.rajdhani(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                const Spacer(),
+                                // Logo Section
+                                Center(
+                                  child: Column(
                                     children: [
                                       Text(
-                                        "Life",
+                                        "Info",
                                         style: GoogleFonts.rajdhani(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.normal,
+                                          color: Colors.white70,
+                                          fontSize: 14,
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
-                                      Image.asset(
-                                        'assets/logo128.png',
-                                        height: 80,
-                                        width: 80,
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Text(
-                                        "Link",
-                                        style: GoogleFonts.rajdhani(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.normal,
-                                        ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "Life",
+                                            style: GoogleFonts.rajdhani(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Image.asset(
+                                            'assets/logo128.png',
+                                            height: 80,
+                                            width: 80,
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Text(
+                                            "Link",
+                                            style: GoogleFonts.rajdhani(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 32),
-                            if (provider.alertState != AlertState.safe)
-                              ElevatedButton(
-                                onPressed: () => provider.resetAlarm(),
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  backgroundColor: AppTheme.danger.withOpacity(
-                                    0.9,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  side: BorderSide(
-                                    color: AppTheme.danger,
-                                    width: 2,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
                                 ),
-                                child: const Text("RESET ALARM"),
-                              ),
 
-                            // Map Section (Visible on Alarm with valid location)
-                            if (provider.alertState == AlertState.alarm &&
-                                provider.fallLocation != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 24.0),
-                                child: Container(
-                                  height: 300,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppTheme.danger,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(18),
-                                    child: FlutterMap(
-                                      options: MapOptions(
-                                        initialCenter: provider.fallLocation!,
-                                        initialZoom: 15.0,
+                                const SizedBox(height: 32),
+                                if (provider.alertState != AlertState.safe)
+                                  ElevatedButton(
+                                    onPressed: () => provider.resetAlarm(),
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      backgroundColor: AppTheme.danger
+                                          .withOpacity(0.9),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
                                       ),
-                                      children: [
-                                        TileLayer(
-                                          urlTemplate:
-                                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                          userAgentPackageName:
-                                              'com.lifelink.app',
+                                      side: BorderSide(
+                                        color: AppTheme.danger,
+                                        width: 2,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                    ),
+                                    child: const Text("RESET ALARM"),
+                                  ),
+
+                                // Map Section (Visible on Alarm with valid location)
+                                if (provider.alertState == AlertState.alarm &&
+                                    provider.fallLocation != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 24.0),
+                                    child: Container(
+                                      height: 300,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: AppTheme.danger,
+                                          width: 2,
                                         ),
-                                        MarkerLayer(
-                                          markers: [
-                                            Marker(
-                                              point: provider.fallLocation!,
-                                              width: 80,
-                                              height: 80,
-                                              child: const Icon(
-                                                Icons.location_on,
-                                                color: Colors.red,
-                                                size: 40,
-                                              ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(18),
+                                        child: FlutterMap(
+                                          options: MapOptions(
+                                            initialCenter:
+                                                provider.fallLocation!,
+                                            initialZoom: 15.0,
+                                          ),
+                                          children: [
+                                            TileLayer(
+                                              urlTemplate:
+                                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                              userAgentPackageName:
+                                                  'com.lifelink.app',
+                                            ),
+                                            MarkerLayer(
+                                              markers: [
+                                                Marker(
+                                                  point: provider.fallLocation!,
+                                                  width: 80,
+                                                  height: 80,
+                                                  child: const Icon(
+                                                    Icons.location_on,
+                                                    color: Colors.red,
+                                                    size: 40,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            if (!provider.isConnected)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 16.0),
-                                child: ElevatedButton(
-                                  onPressed: () => provider.retryConnection(),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.cyan.withOpacity(
-                                      0.2,
-                                    ),
-                                    foregroundColor: Colors.cyan,
-                                    side: const BorderSide(color: Colors.cyan),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
+                                if (!provider.isConnected)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16.0),
+                                    child: ElevatedButton(
+                                      onPressed: () =>
+                                          provider.retryConnection(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.cyan
+                                            .withOpacity(0.2),
+                                        foregroundColor: Colors.cyan,
+                                        side: const BorderSide(
+                                          color: Colors.cyan,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text("RECONNECT"),
                                     ),
                                   ),
-                                  child: const Text("RECONNECT"),
-                                ),
-                              ),
-                          ],
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
+                  );
+                },
+              ),
+
+              // Countdown Overlay
+              if (provider.isCountingDown)
+                Container(
+                  color: Colors.black.withOpacity(
+                    0.9,
+                  ), // Darken background primarily
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                        size: 80,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        "FALL DETECTED!",
+                        style: GoogleFonts.rajdhani(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Requesting help in",
+                        style: GoogleFonts.rajdhani(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.red, width: 4),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          "${provider.currentCountdown}",
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.red,
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      SizedBox(
+                        width: 200,
+                        height: 60,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: () => provider.cancelFall(),
+                          child: Text(
+                            "I'M OK",
+                            style: GoogleFonts.rajdhani(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      TextButton(
+                        onPressed: () {
+                          // Trigger immediately
+                          // provider.forceExecuteAction(); // Optional method if we want instant trigger
+                          // For now user can just wait.
+                        },
+                        child: Text(
+                          "Sending to: ${provider.emergencyContactName.isNotEmpty ? provider.emergencyContactName : 'Emergency'}",
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white30,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
+            ],
           );
         },
       ),
