@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:vibration/vibration.dart';
+import 'package:latlong2/latlong.dart';
 import '../services/ble_service.dart';
 
 enum AlertState { safe, warning, alarm }
@@ -21,7 +22,16 @@ class SensorProvider with ChangeNotifier {
   double get gForce => _gForce;
   int get pulse => _pulse;
   int get spo2 => _spo2;
+  bool _isConnected = false;
+  LatLng? _fallLocation; // Nullable
+
+  AlertState get alertState => _alertState;
+  String get rawMessage => _rawMessage;
+  double get gForce => _gForce;
+  int get pulse => _pulse;
+  int get spo2 => _spo2;
   bool get isConnected => _isConnected;
+  LatLng? get fallLocation => _fallLocation;
 
   SensorProvider() {
     _init();
@@ -64,7 +74,11 @@ class SensorProvider with ChangeNotifier {
       if (msg.startsWith("POTENTIAL_FALL")) {
         _alertState = AlertState.warning;
         _extractMetrics(msg);
+      } else if (msg.startsWith("FALL_ACCEPTED")) {
+        _alertState = AlertState.alarm;
+        _extractMetrics(msg); 
       } else if (msg.startsWith("FALL_DETECTED")) {
+        // Legacy or backup
         _alertState = AlertState.alarm;
         _extractMetrics(msg);
       } else {
@@ -99,27 +113,30 @@ class SensorProvider with ChangeNotifier {
   }
 
   void _extractMetrics(String msg) {
-    // Simple regex or split parsing
-    // POTENTIAL_FALL G:2.50 P:100 S:98
-    // Note: The user spec has specific format.
-    try {
-      // Logic to pull out G, P, S
-      // This is a naive implementation, robust regex is better.
-      RegExp gReg = RegExp(r"G:\s*([0-9.]+)");
-      RegExp pReg = RegExp(r"P:\s*([0-9]+)");
-      RegExp sReg = RegExp(r"S:\s*([0-9]+)");
+    // Parse FALL_ACCEPTED Lat:44.123 Lon:20.123
+    // FALL_DETECTED might be old format.
+    // New format in lifelink.cpp: "FALL_ACCEPTED Angle:%.1f G:%.2f Lat:%.5f Lon:%.5f"
 
-      var gMatch = gReg.firstMatch(msg);
-      var pMatch = pReg.firstMatch(msg);
-      var sMatch = sReg.firstMatch(msg);
+    RegExp latReg = RegExp(r"Lat:\s*([0-9.-]+)");
+    RegExp lonReg = RegExp(r"Lon:\s*([0-9.-]+)");
+    
+    // Also parse Angle if needed, but G force is usually enough for UI
+    RegExp gReg = RegExp(r"G:\s*([0-9.]+)");
 
-      if (gMatch != null) _gForce = double.tryParse(gMatch.group(1)!) ?? _gForce;
-      if (pMatch != null) _pulse = int.tryParse(pMatch.group(1)!) ?? _pulse;
-      if (sMatch != null) _spo2 = int.tryParse(sMatch.group(1)!) ?? _spo2;
-    } catch (e) {
-      print("Metric Extraction Error: $e");
+    var latMatch = latReg.firstMatch(msg);
+    var lonMatch = lonReg.firstMatch(msg);
+    var gMatch = gReg.firstMatch(msg);
+
+    if (latMatch != null && lonMatch != null) {
+        double lat = double.tryParse(latMatch.group(1)!) ?? 0.0;
+        double lon = double.tryParse(lonMatch.group(1)!) ?? 0.0;
+        // Verify valid coords (not 0,0) before updating
+        if (lat != 0.0 || lon != 0.0) {
+             _fallLocation = LatLng(lat, lon); // Need to import latlong2
+        }
     }
-  }
+    
+    if (gMatch != null) _gForce = double.tryParse(gMatch.group(1)!) ?? _gForce;
 
   void resetAlarm() {
     _alertState = AlertState.safe;

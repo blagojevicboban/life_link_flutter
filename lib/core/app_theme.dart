@@ -20,15 +20,11 @@ class AppTheme {
         primary: safe,
         secondary: warning,
         error: danger,
-        background: background,
         surface: surface,
       ),
       textTheme: GoogleFonts.rajdhaniTextTheme(
         ThemeData.dark().textTheme,
-      ).apply(
-        bodyColor: textMain,
-        displayColor: textMain,
-      ),
+      ).apply(bodyColor: textMain, displayColor: textMain),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: surface,
@@ -40,9 +36,7 @@ class AppTheme {
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

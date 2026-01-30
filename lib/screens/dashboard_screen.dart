@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../providers/sensor_provider.dart';
 import '../core/app_theme.dart';
 
@@ -9,42 +11,175 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dark background matching the watch face style
     return Scaffold(
+      backgroundColor: const Color(0xFF020E15), // Deep navy/black
       body: Consumer<SensorProvider>(
         builder: (context, provider, child) {
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(provider),
-                  const Spacer(),
-                  _buildStatusCard(context, provider),
-                  const Spacer(),
-                  _buildMetricsGrid(provider),
-                  const SizedBox(height: 32),
-                  if (provider.alertState != AlertState.safe)
-                    ElevatedButton(
-                      onPressed: () => provider.resetAlarm(),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: AppTheme.textMain,
-                        backgroundColor: AppTheme.danger.withOpacity(0.8),
-                        side: BorderSide(color: AppTheme.danger, width: 2),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildHeader(provider),
+
+                            const SizedBox(height: 32),
+                            // Main Status Card with rounded/circular aesthetic
+                            // Removed Expanded to prevent overflow/collapse in IntrinsicHeight
+                            _buildStatusCard(context, provider),
+
+                            const SizedBox(height: 24),
+                            // Metrics Grid
+                            _buildMetricsGrid(provider),
+
+                            const Spacer(),
+                            // Logo Section
+                            Center(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    "Info",
+                                    style: GoogleFonts.rajdhani(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Life",
+                                        style: GoogleFonts.rajdhani(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Image.asset(
+                                        'assets/logo128.png',
+                                        height: 80,
+                                        width: 80,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Text(
+                                        "Link",
+                                        style: GoogleFonts.rajdhani(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+                            if (provider.alertState != AlertState.safe)
+                              ElevatedButton(
+                                onPressed: () => provider.resetAlarm(),
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppTheme.danger.withOpacity(
+                                    0.9,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  side: BorderSide(
+                                    color: AppTheme.danger,
+                                    width: 2,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                ),
+                                child: const Text("RESET ALARM"),
+                              ),
+
+                            // Map Section (Visible on Alarm with valid location)
+                            if (provider.alertState == AlertState.alarm &&
+                                provider.fallLocation != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 24.0),
+                                child: Container(
+                                  height: 300,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppTheme.danger,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(18),
+                                    child: FlutterMap(
+                                      options: MapOptions(
+                                        initialCenter: provider.fallLocation!,
+                                        initialZoom: 15.0,
+                                      ),
+                                      children: [
+                                        TileLayer(
+                                          urlTemplate:
+                                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                          userAgentPackageName:
+                                              'com.lifelink.app',
+                                        ),
+                                        MarkerLayer(
+                                          markers: [
+                                            Marker(
+                                              point: provider.fallLocation!,
+                                              width: 80,
+                                              height: 80,
+                                              child: const Icon(
+                                                Icons.location_on,
+                                                color: Colors.red,
+                                                size: 40,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!provider.isConnected)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16.0),
+                                child: ElevatedButton(
+                                  onPressed: () => provider.retryConnection(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.cyan.withOpacity(
+                                      0.2,
+                                    ),
+                                    foregroundColor: Colors.cyan,
+                                    side: const BorderSide(color: Colors.cyan),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Text("RECONNECT"),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                      child: const Text("RESET ALARM"),
                     ),
-                  if (!provider.isConnected)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: ElevatedButton(
-                        onPressed: () => provider.retryConnection(),
-                        child: const Text("RECONNECT"),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
@@ -55,38 +190,57 @@ class DashboardScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          "LIFELINK",
-          style: GoogleFonts.rajdhani(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2.0,
-            color: AppTheme.textDim,
-          ),
+        // Using visible placeholder for Impact similar to design
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "IMPACT (G)",
+              style: GoogleFonts.rajdhani(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+                letterSpacing: 1.0,
+              ),
+            ),
+            Text(
+              provider.gForce.toStringAsFixed(2),
+              style: GoogleFonts.rajdhani(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
+
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: provider.isConnected ? AppTheme.safe.withOpacity(0.2) : AppTheme.danger.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(4),
+            color: provider.isConnected
+                ? Colors.green.withOpacity(0.1)
+                : Colors.red.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20), // More rounded
             border: Border.all(
-              color: provider.isConnected ? AppTheme.safe : AppTheme.danger,
+              color: provider.isConnected ? Colors.green : Colors.red,
             ),
           ),
           child: Row(
             children: [
               Icon(
-                provider.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+                provider.isConnected
+                    ? Icons.bluetooth_connected
+                    : Icons.bluetooth_disabled,
                 size: 16,
-                color: provider.isConnected ? AppTheme.safe : AppTheme.danger,
+                color: provider.isConnected ? Colors.green : Colors.red,
               ),
               const SizedBox(width: 8),
               Text(
-                provider.isConnected ? "CONNECTED" : "DISCONNECTED",
+                "BLT", // Abbreviated as in design
                 style: GoogleFonts.rajdhani(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: provider.isConnected ? AppTheme.safe : AppTheme.danger,
+                  color: provider.isConnected ? Colors.green : Colors.red,
                 ),
               ),
             ],
@@ -104,7 +258,7 @@ class DashboardScreen extends StatelessWidget {
 
     switch (provider.alertState) {
       case AlertState.safe:
-        statusColor = AppTheme.safe;
+        statusColor = const Color(0xFF00E5FF); // Cyan
         statusText = "SYSTEM NOMINAL";
         subText = "Monitoring Active";
         statusIcon = Icons.shield_outlined;
@@ -124,45 +278,45 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(32),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        border: Border.all(color: statusColor, width: 3),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF051923), // Slightly lighter dark for card
+        shape: BoxShape.circle, // Circular shape key for design
+        border: Border.all(color: statusColor.withOpacity(0.5), width: 2),
         boxShadow: [
           BoxShadow(
-            color: statusColor.withOpacity(0.2),
-            blurRadius: 20,
-            spreadRadius: 5,
-          )
+            color: statusColor.withOpacity(0.15),
+            blurRadius: 30,
+            spreadRadius: 2,
+          ),
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(statusIcon, size: 64, color: statusColor),
-          const SizedBox(height: 16),
+          Icon(statusIcon, size: 48, color: statusColor),
+          const SizedBox(height: 12),
           Text(
             statusText,
             textAlign: TextAlign.center,
             style: GoogleFonts.rajdhani(
-              fontSize: 32,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: statusColor,
               shadows: [
-                Shadow(
-                  color: statusColor,
-                  blurRadius: 10,
-                )
+                Shadow(color: statusColor.withOpacity(0.8), blurRadius: 10),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             subText,
-            style: TextStyle(
-              color: AppTheme.textDim,
-              fontSize: 16,
-              letterSpacing: 1.2,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+              letterSpacing: 1.0,
             ),
           ),
         ],
@@ -172,46 +326,51 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _buildMetricsGrid(SensorProvider provider) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Expanded(child: _buildMetricTile("G-FORCE", "${provider.gForce.toStringAsFixed(2)}G", Icons.speed)),
-        const SizedBox(width: 16),
-        Expanded(child: _buildMetricTile("PULSE", "${provider.pulse} BPM", Icons.favorite)),
-        const SizedBox(width: 16),
-        Expanded(child: _buildMetricTile("SpO2", "${provider.spo2}%", Icons.water_drop)),
+        _buildMetricTile(
+          "PULSE",
+          "${provider.pulse} BPM",
+          Icons.favorite,
+          Colors.redAccent,
+        ),
+        _buildMetricTile(
+          "SpO2",
+          "${provider.spo2}%",
+          Icons.water_drop,
+          Colors.blueAccent,
+        ),
       ],
     );
   }
 
-  Widget _buildMetricTile(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.textDim.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 24, color: AppTheme.textDim),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.rajdhani(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textMain,
-            ),
+  Widget _buildMetricTile(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, size: 28, color: color),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.rajdhani(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.white70,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textDim,
-            ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.rajdhani(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

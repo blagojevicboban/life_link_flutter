@@ -17,11 +17,14 @@ class BleService {
   StreamSubscription? _scanSubscription;
   StreamSubscription? _connectionSubscription;
 
-  final StreamController<List<int>> _dataController = StreamController<List<int>>.broadcast();
+  final StreamController<List<int>> _dataController =
+      StreamController<List<int>>.broadcast();
   Stream<List<int>> get dataStream => _dataController.stream;
 
-  final StreamController<BluetoothConnectionState> _connectionStateController = StreamController<BluetoothConnectionState>.broadcast();
-  Stream<BluetoothConnectionState> get connectionStateStream => _connectionStateController.stream;
+  final StreamController<BluetoothConnectionState> _connectionStateController =
+      StreamController<BluetoothConnectionState>.broadcast();
+  Stream<BluetoothConnectionState> get connectionStateStream =>
+      _connectionStateController.stream;
 
   Future<void> init() async {
     // Request permissions
@@ -31,6 +34,12 @@ class BleService {
         Permission.bluetoothScan,
         Permission.bluetoothConnect,
       ].request();
+
+      // Check if Location Service is enabled (Critical for BLE on Android < 12)
+      if (await Permission.location.serviceStatus.isDisabled) {
+        print("WARNING: Location Services are DISABLED. BLE Scan might fail.");
+        // Consider notifying UI or prompting user to enable it.
+      }
     }
 
     // Determine if we are already connected to a device
@@ -45,15 +54,19 @@ class BleService {
     if (FlutterBluePlus.isScanningNow) return;
 
     print("Starting BLE Scan...");
-    
+
     // Listen to scan results
     _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult result in results) {
-        print("Found device: ${result.device.platformName} (${result.device.remoteId})");
-        print("  Services: ${result.advertisementData.serviceUuids}");
-        
-        if (result.device.platformName == _deviceName || 
-            result.advertisementData.serviceUuids.contains(Guid(_serviceUuid))) {
+        print(
+          "Found device: ${result.device.platformName} (${result.device.remoteId})",
+        );
+        // print("  Services: ${result.advertisementData.serviceUuids}");
+
+        if (result.device.platformName == _deviceName ||
+            result.advertisementData.serviceUuids.contains(
+              Guid(_serviceUuid),
+            )) {
           print("  >>> MATCH FOUND! Connecting...");
           _connectToDevice(result.device);
           stopScan(); // Stop scanning once found
@@ -62,11 +75,15 @@ class BleService {
       }
     });
 
-    // Start scanning without filter first to test visibility
-    await FlutterBluePlus.startScan(
-      // withServices: [Guid(_serviceUuid)], 
-      timeout: const Duration(seconds: 15),
-    );
+    // Start scanning
+    try {
+      await FlutterBluePlus.startScan(
+        // withServices: [Guid(_serviceUuid)],
+        timeout: const Duration(seconds: 15),
+      );
+    } catch (e) {
+      print("Error starting BLE scan: $e");
+    }
   }
 
   Future<void> stopScan() async {
@@ -103,7 +120,8 @@ class BleService {
     List<BluetoothService> services = await connectedDevice!.discoverServices();
     for (BluetoothService service in services) {
       if (service.uuid.toString() == _serviceUuid) {
-        for (BluetoothCharacteristic characteristic in service.characteristics) {
+        for (BluetoothCharacteristic characteristic
+            in service.characteristics) {
           if (characteristic.uuid.toString() == _characteristicUuid) {
             targetCharacteristic = characteristic;
             await _subscribeToCharacteristic();
