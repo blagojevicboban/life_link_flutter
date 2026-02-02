@@ -139,6 +139,10 @@ class BleService {
     });
   }
 
+  void log(String message) {
+    print(message);
+  }
+
   void dispose() {
     _scanSubscription?.cancel();
     _connectionSubscription?.cancel();

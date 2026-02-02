@@ -1,0 +1,36 @@
+﻿Analyzing life_link...                                          
+
+warning - The value of the field '_debugStatus' isn't used - lib\providers\sensor_provider.dart:31:10 - unused_field
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:115:5 - avoid_print
+  error - The method 'log' isn't defined for the type 'BleService' - lib\providers\sensor_provider.dart:186:25 - undefined_method
+  error - The method 'log' isn't defined for the type 'BleService' - lib\providers\sensor_provider.dart:198:23 - undefined_method
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:251:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:279:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:302:15 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:305:13 - avoid_print
+warning - Dead code - lib\providers\sensor_provider.dart:322:54 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\providers\sensor_provider.dart:322:57 - dead_null_aware_expression
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:397:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\sensor_provider.dart:399:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:117:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:188:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:215:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:345:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:346:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:412:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:415:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:434:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:111:29 - deprecated_member_use
+warning - The value of the local variable 'isConnected' isn't used - lib\screens\settings_screen.dart:178:18 - unused_local_variable
+   info - The type of the right operand ('bool') isn't a subtype or a supertype of the left operand ('DeviceIdentifier') - lib\screens\settings_screen.dart:179:40 - unrelated_type_equality_checks
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:229:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:293:29 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:50:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:61:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:70:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:82:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:92:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:108:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:128:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\ble_service.dart:135:5 - avoid_print
+

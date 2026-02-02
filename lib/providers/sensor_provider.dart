@@ -28,6 +28,8 @@ class SensorProvider with ChangeNotifier {
   int _batteryLevel = 0;
   bool _isConnected = false;
 
+  String _debugStatus = "";
+
   // Settings
   String? _defaultDeviceAddress;
   String _emergencyContactName = "";
@@ -63,6 +65,10 @@ class SensorProvider with ChangeNotifier {
   List<ScanResult> get scanResults => _scanResults;
   bool get isScanning => _isScanning;
   String? get defaultDeviceAddress => _defaultDeviceAddress;
+  String? get connectedDeviceAddress =>
+      _bleService.connectedDevice?.remoteId.toString();
+  String get connectedDeviceName =>
+      _bleService.connectedDevice?.platformName ?? "Unknown Device";
 
   LatLng? _fallLocation;
 
@@ -75,8 +81,14 @@ class SensorProvider with ChangeNotifier {
     await _bleService.init(); // Wait for permissions
 
     // Listen to connection state
+    // Listen to connection state
     _bleService.connectionStateStream.listen((state) {
       _isConnected = (state == BluetoothConnectionState.connected);
+
+      if (_isConnected) {
+        stopScan();
+      }
+
       notifyListeners();
       if (!_isConnected) {
         _rawMessage = "Disconnected";
@@ -279,7 +291,11 @@ class SensorProvider with ChangeNotifier {
     switch (_selectedFallAction) {
       case FallAction.call:
         if (_emergencyContactNumber.isNotEmpty) {
-          await FlutterPhoneDirectCaller.callNumber(_emergencyContactNumber);
+          if (Platform.isAndroid || Platform.isIOS) {
+            await FlutterPhoneDirectCaller.callNumber(_emergencyContactNumber);
+          } else {
+            print("Direct call not supported on this platform.");
+          }
         }
         break;
       case FallAction.sms:
@@ -317,6 +333,9 @@ class SensorProvider with ChangeNotifier {
   }
 
   void _handleHaptics(AlertState state) async {
+    // Vibration is only supported on mobile
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+
     bool hasVibrator = await Vibration.hasVibrator() ?? false;
     if (!hasVibrator) return;
 
@@ -412,6 +431,9 @@ class SensorProvider with ChangeNotifier {
         action: 'android.settings.BLUETOOTH_SETTINGS',
       );
       await intent.launch();
+    } else if (Platform.isWindows) {
+      // Open Windows Bluetooth settings
+      await Process.run('start', ['ms-settings:bluetooth'], runInShell: true);
     }
   }
 }

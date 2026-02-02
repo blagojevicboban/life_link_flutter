@@ -162,62 +162,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const Divider(color: Colors.white10, height: 32),
 
-          if (provider.scanResults.isEmpty && !provider.isScanning)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                "No devices found. Tap refresh to scan.",
-                style: GoogleFonts.rajdhani(color: Colors.white54),
-              ),
-            ),
-
-          ...provider.scanResults.map((result) {
-            bool isDefault =
-                result.device.remoteId.toString() ==
-                provider.defaultDeviceAddress;
-            bool isConnected =
-                result.device.remoteId ==
-                provider
-                    .isConnected; // Simply checking if this is the connected valid
-            // Note: FlutterBluePlus device check might need object comparison or ID comparison
-
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                result.device.platformName.isNotEmpty
-                    ? result.device.platformName
-                    : "Unknown Device",
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(
-                result.device.remoteId.toString(),
-                style: GoogleFonts.rajdhani(color: Colors.white54),
-              ),
-              trailing: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDefault ? AppTheme.accent : Colors.white10,
-                  foregroundColor: isDefault ? Colors.black : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+          if (provider.isConnected)
+            Column(
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    provider.connectedDeviceName,
+                    style: GoogleFonts.rajdhani(
+                      color: AppTheme.accent,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                  subtitle: Text(
+                    provider.connectedDeviceAddress ?? "",
+                    style: GoogleFonts.rajdhani(color: Colors.white54),
+                  ),
+                  trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.danger,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
+                    onPressed: () => provider.disconnect(),
+                    child: const Text("DISCONNECT"),
                   ),
                 ),
-                onPressed: () {
-                  provider.connect(result.device);
-                  provider.saveSettings(
-                    deviceAddress: result.device.remoteId.toString(),
-                  );
-                },
-                child: Text(isDefault ? "DEFAULT" : "CONNECT"),
+                if (!provider.isScanning)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Center(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.refresh, color: Colors.white70),
+                        label: Text(
+                          "Scan for other devices",
+                          style: GoogleFonts.rajdhani(color: Colors.white70),
+                        ),
+                        onPressed: () => provider.startScan(),
+                      ),
+                    ),
+                  ),
+              ],
+            )
+          else ...[
+            if (provider.scanResults.isEmpty && !provider.isScanning)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  "No devices found. Tap refresh to scan.",
+                  style: GoogleFonts.rajdhani(color: Colors.white54),
+                ),
               ),
-            );
-          }),
+
+            ...provider.scanResults.map((result) {
+              bool isDefault =
+                  result.device.remoteId.toString() ==
+                  provider.defaultDeviceAddress;
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  result.device.platformName.isNotEmpty
+                      ? result.device.platformName
+                      : "Unknown Device",
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  result.device.remoteId.toString(),
+                  style: GoogleFonts.rajdhani(color: Colors.white54),
+                ),
+                trailing: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDefault
+                        ? AppTheme.accent
+                        : Colors.white10,
+                    foregroundColor: isDefault ? Colors.black : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  onPressed: () {
+                    provider.connect(result.device);
+                    provider.saveSettings(
+                      deviceAddress: result.device.remoteId.toString(),
+                    );
+                  },
+                  child: Text(isDefault ? "DEFAULT" : "CONNECT"),
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );

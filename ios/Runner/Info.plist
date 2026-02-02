@@ -45,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>This app requires Bluetooth access to connect to the LifeLink wearable device for fall detection monitoring.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>This app requires Bluetooth access to connect to the LifeLink wearable device for fall detection monitoring.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to send coordinates to emergency contacts in case of a fall.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to send coordinates to emergency contacts in case of a fall.</string>
 </dict>
 </plist>

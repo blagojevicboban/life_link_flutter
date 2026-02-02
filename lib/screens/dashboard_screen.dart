@@ -177,28 +177,44 @@ class DashboardScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                if (!provider.isConnected)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 16.0),
-                                    child: ElevatedButton(
-                                      onPressed: () =>
-                                          provider.retryConnection(),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.cyan
-                                            .withOpacity(0.2),
-                                        foregroundColor: Colors.cyan,
-                                        side: const BorderSide(
-                                          color: Colors.cyan,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            30,
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16.0),
+                                  child: provider.isConnected
+                                      ? ElevatedButton(
+                                          onPressed: () =>
+                                              provider.disconnect(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.danger
+                                                .withOpacity(0.2),
+                                            foregroundColor: AppTheme.danger,
+                                            side: BorderSide(
+                                              color: AppTheme.danger,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                            ),
                                           ),
+                                          child: const Text("DISCONNECT"),
+                                        )
+                                      : ElevatedButton(
+                                          onPressed: () =>
+                                              provider.retryConnection(),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.cyan
+                                                .withOpacity(0.2),
+                                            foregroundColor: Colors.cyan,
+                                            side: const BorderSide(
+                                              color: Colors.cyan,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(30),
+                                            ),
+                                          ),
+                                          child: const Text("RECONNECT"),
                                         ),
-                                      ),
-                                      child: const Text("RECONNECT"),
-                                    ),
-                                  ),
+                                ),
                               ],
                             ),
                           ),
